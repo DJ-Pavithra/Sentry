@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, FlatList, TextInput, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { User, Plus, X, CreditCard as Edit, Phone, MapPin } from 'lucide-react-native';
+import { User, Plus, X, CreditCard as Edit, Phone, MapPin, AlertTriangle } from 'lucide-react-native';
 
 // Mock data for emergency contacts
 const initialContacts = [
@@ -21,14 +21,12 @@ export default function ContactsScreen() {
       return;
     }
 
-    if (editingId) {
-      // Update existing contact
+    if (editingId !== null) {
       setContacts(contacts.map(contact => 
         contact.id === editingId ? { ...newContact, id: editingId } : contact
       ));
       setEditingId(null);
     } else {
-      // Add new contact
       const id = Date.now().toString();
       setContacts([...contacts, { ...newContact, id }]);
     }
@@ -37,7 +35,7 @@ export default function ContactsScreen() {
     setShowAddForm(false);
   };
 
-  const editContact = (id) => {
+  const editContact = (id: null  ) => {
     const contactToEdit = contacts.find(contact => contact.id === id);
     if (contactToEdit) {
       setNewContact({ ...contactToEdit });
@@ -46,15 +44,12 @@ export default function ContactsScreen() {
     }
   };
 
-  const deleteContact = (id) => {
+  const deleteContact = (id: string) => {
     Alert.alert(
       "Delete Contact",
       "Are you sure you want to remove this emergency contact?",
       [
-        {
-          text: "Cancel",
-          style: "cancel"
-        },
+        { text: "Cancel", style: "cancel" },
         { 
           text: "Delete", 
           onPress: () => setContacts(contacts.filter(contact => contact.id !== id)),
@@ -64,7 +59,7 @@ export default function ContactsScreen() {
     );
   };
 
-  const renderContact = ({ item }) => (
+  const renderContact = ({ item }: { item: any }) => (
     <View style={styles.contactCard}>
       <View style={styles.contactInfo}>
         <View style={styles.contactAvatar}>
@@ -105,7 +100,7 @@ export default function ContactsScreen() {
         {showAddForm ? (
           <View style={styles.formContainer}>
             <Text style={styles.formTitle}>
-              {editingId ? 'Edit Contact' : 'Add Emergency Contact'}
+              {editingId !== null ? 'Edit Contact' : 'Add Emergency Contact'}
             </Text>
             
             <View style={styles.inputGroup}>
@@ -161,48 +156,12 @@ export default function ContactsScreen() {
           </View>
         ) : (
           <>
-            <View style={styles.contactsHeader}>
-              <Text style={styles.contactsTitle}>Your Trusted Contacts</Text>
-              <TouchableOpacity 
-                style={styles.addButton} 
-                onPress={() => setShowAddForm(true)}
-              >
-                <Plus size={20} color="#FFFFFF" />
-              </TouchableOpacity>
-            </View>
-            
-            {contacts.length > 0 ? (
-              <FlatList
-                data={contacts}
-                renderItem={renderContact}
-                keyExtractor={item => item.id}
-                contentContainerStyle={styles.contactsList}
-              />
-            ) : (
-              <View style={styles.emptyState}>
-                <User size={48} color="#BDBDBD" />
-                <Text style={styles.emptyStateText}>No emergency contacts added yet</Text>
-                <Text style={styles.emptyStateSubtext}>
-                  Add trusted contacts who will receive alerts when you need help
-                </Text>
-              </View>
-            )}
-            
-            <View style={styles.infoCard}>
-              <Text style={styles.infoTitle}>What Your Contacts Will Receive</Text>
-              <View style={styles.infoItem}>
-                <MapPin size={18} color="#E53935" style={styles.infoIcon} />
-                <Text style={styles.infoText}>Your real-time location</Text>
-              </View>
-              <View style={styles.infoItem}>
-                <Phone size={18} color="#E53935" style={styles.infoIcon} />
-                <Text style={styles.infoText}>A direct call option to reach you</Text>
-              </View>
-              <View style={styles.infoItem}>
-                <AlertTriangle size={18} color="#E53935" style={styles.infoIcon} />
-                <Text style={styles.infoText}>Emergency message with situation details</Text>
-              </View>
-            </View>
+            <FlatList
+              data={contacts}
+              renderItem={renderContact}
+              keyExtractor={item => item.id}
+              contentContainerStyle={styles.contactsList}
+            />
           </>
         )}
       </View>

@@ -20,6 +20,14 @@ export default function TabLayout() {
       }}
     >
       <Tabs.Screen
+        name="signin"
+        options={{
+          title: 'Sign In',
+          tabBarIcon: ({ color, size }) => <User size={size} color={color} />,
+          tabBarStyle: { display: 'none' },
+        }}
+      />
+      <Tabs.Screen
         name="index"
         options={{
           title: 'Home',
@@ -52,6 +60,14 @@ export default function TabLayout() {
         options={{
           title: 'Settings',
           tabBarIcon: ({ color, size }) => <Settings size={size} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="onboard"
+        options={{
+          title: 'Onboard',
+          tabBarStyle: { display: 'none' },
+          href: null,
         }}
       />
     </Tabs>
