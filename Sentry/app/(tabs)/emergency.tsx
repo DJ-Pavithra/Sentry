@@ -2,12 +2,18 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Alert, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Shield, Video, Mic, MapPin, TriangleAlert as AlertTriangle } from 'lucide-react-native';
+import { useNotifications } from '../../contexts/NotificationContext';
+import EmergencyService from '../../services/EmergencyService';
+import * as Location from 'expo-location';
+import { DeviceEventEmitter } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function EmergencyScreen() {
   const [recording, setRecording] = useState(false);
   const [sosActivated, setSosActivated] = useState(false);
+  const { addNotification } = useNotifications();
   
-  const triggerSOS = () => {
+  const triggerSOS = async () => {
     if (sosActivated) {
       Alert.alert(
         "Cancel SOS",
@@ -27,14 +33,52 @@ export default function EmergencyScreen() {
         ]
       );
     } else {
-      // In a real app, this would send alerts to emergency contacts
       setSosActivated(true);
       setRecording(true);
+      
+      addNotification({
+        type: 'emergency',
+        title: 'Emergency Alert',
+        description: 'SOS signal activated',
+        read: false,
+      });
       
       // Simulate auto audio recording for 30 seconds
       setTimeout(() => {
         setRecording(false);
       }, 30000);
+
+      try {
+        // Send emergency alerts to all contacts
+        await EmergencyService.sendEmergencyAlerts();
+        
+        // Get current location
+        const location = await Location.getCurrentPositionAsync({});
+        
+        // Store emergency in database
+        AsyncStorage.getItem('emergency_contacts').then(async (contacts) => {
+          if (contacts) {
+            const contactsArray = JSON.parse(contacts);
+            const googleMapsUrl = `https://www.google.com/maps?q=${location.coords.latitude},${location.coords.longitude}`;
+            const message = `EMERGENCY SOS ALERT! I need help! My current location: ${googleMapsUrl}`;
+            const phoneNumbers = contactsArray.map(contact => contact.phone);
+            await EmergencyService.sendSMS(phoneNumbers, message);
+          }
+        });
+
+        addNotification({
+          id: Date.now().toString(),
+          title: 'Emergency Alert Sent',
+          message: 'Your emergency contacts have been notified.',
+          read: false
+        });
+      } catch (error) {
+        Alert.alert(
+          'Error',
+          'Failed to send emergency alerts. Please try calling emergency services directly.',
+        );
+        console.error('Emergency alert error:', error);
+      }
     }
   };
 

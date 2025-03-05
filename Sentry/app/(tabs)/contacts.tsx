@@ -1,7 +1,15 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, FlatList, TextInput, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { User, Plus, X, CreditCard as Edit, Phone, MapPin, AlertTriangle } from 'lucide-react-native';
+import EmergencyService, { EmergencyContact } from '../../services/EmergencyService';
+
+interface Contact {
+  id: string;
+  name: string;
+  phone: string;
+  relation: string;
+}
 
 // Mock data for emergency contacts
 const initialContacts = [
@@ -10,32 +18,49 @@ const initialContacts = [
 ];
 
 export default function ContactsScreen() {
-  const [contacts, setContacts] = useState(initialContacts);
+  const [contacts, setContacts] = useState<Contact[]>(initialContacts);
   const [showAddForm, setShowAddForm] = useState(false);
   const [newContact, setNewContact] = useState({ name: '', phone: '', relation: '' });
-  const [editingId, setEditingId] = useState(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
 
-  const addContact = () => {
+  // Load contacts on component mount
+  useEffect(() => {
+    loadContacts();
+  }, []);
+
+  const loadContacts = async () => {
+    const savedContacts = await EmergencyService.loadContacts();
+    setContacts(savedContacts);
+  };
+
+  const addContact = async () => {
     if (!newContact.name || !newContact.phone) {
       Alert.alert('Missing Information', 'Please enter a name and phone number.');
       return;
     }
 
-    if (editingId !== null) {
-      setContacts(contacts.map(contact => 
-        contact.id === editingId ? { ...newContact, id: editingId } : contact
-      ));
+    try {
+      let updatedContacts;
+      if (editingId !== null) {
+        updatedContacts = contacts.map(contact => 
+          contact.id === editingId ? { ...newContact, id: editingId } : contact
+        );
+      } else {
+        const id = Date.now().toString();
+        updatedContacts = [...contacts, { ...newContact, id }];
+      }
+      
+      await EmergencyService.saveContacts(updatedContacts);
+      setContacts(updatedContacts);
+      setNewContact({ name: '', phone: '', relation: '' });
+      setShowAddForm(false);
       setEditingId(null);
-    } else {
-      const id = Date.now().toString();
-      setContacts([...contacts, { ...newContact, id }]);
+    } catch (error) {
+      Alert.alert('Error', 'Failed to save contact. Please try again.');
     }
-    
-    setNewContact({ name: '', phone: '', relation: '' });
-    setShowAddForm(false);
   };
 
-  const editContact = (id: null  ) => {
+  const editContact = (id: string) => {
     const contactToEdit = contacts.find(contact => contact.id === id);
     if (contactToEdit) {
       setNewContact({ ...contactToEdit });
@@ -44,7 +69,7 @@ export default function ContactsScreen() {
     }
   };
 
-  const deleteContact = (id: string) => {
+  const deleteContact = async (id: string) => {
     Alert.alert(
       "Delete Contact",
       "Are you sure you want to remove this emergency contact?",
@@ -52,24 +77,26 @@ export default function ContactsScreen() {
         { text: "Cancel", style: "cancel" },
         { 
           text: "Delete", 
-          onPress: () => setContacts(contacts.filter(contact => contact.id !== id)),
+          onPress: async () => {
+            try {
+              const updatedContacts = contacts.filter(contact => contact.id !== id);
+              await EmergencyService.saveContacts(updatedContacts);
+              setContacts(updatedContacts);
+            } catch (error) {
+              Alert.alert('Error', 'Failed to delete contact. Please try again.');
+            }
+          },
           style: "destructive"
         }
       ]
     );
   };
 
-  const renderContact = ({ item }: { item: any }) => (
-    <View style={styles.contactCard}>
+  const renderContact = ({ item }: { item: Contact }) => (
+    <View style={styles.contactItem}>
       <View style={styles.contactInfo}>
-        <View style={styles.contactAvatar}>
-          <Text style={styles.contactInitial}>{item.name[0]}</Text>
-        </View>
-        <View style={styles.contactDetails}>
-          <Text style={styles.contactName}>{item.name}</Text>
-          <Text style={styles.contactPhone}>{item.phone}</Text>
-          <Text style={styles.contactRelation}>{item.relation}</Text>
-        </View>
+        <Text style={styles.contactName}>{item.name}</Text>
+        <Text style={styles.contactPhone}>{item.phone}</Text>
       </View>
       
       <View style={styles.contactActions}>
@@ -94,6 +121,9 @@ export default function ContactsScreen() {
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Emergency Contacts</Text>
+        <TouchableOpacity style={styles.addButton} onPress={() => setShowAddForm(true)}>
+          <Plus size={24} color="#FFFFFF" />
+        </TouchableOpacity>
       </View>
 
       <View style={styles.content}>
@@ -159,8 +189,8 @@ export default function ContactsScreen() {
             <FlatList
               data={contacts}
               renderItem={renderContact}
-              keyExtractor={item => item.id}
-              contentContainerStyle={styles.contactsList}
+              keyExtractor={(item) => item.id}
+              style={styles.list}
             />
           </>
         )}
@@ -175,98 +205,56 @@ const styles = StyleSheet.create({
     backgroundColor: '#F5F5F5',
   },
   header: {
-    paddingHorizontal: 20,
-    paddingVertical: 15,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 16,
     backgroundColor: '#FFFFFF',
     borderBottomWidth: 1,
     borderBottomColor: '#E0E0E0',
   },
   headerTitle: {
-    fontSize: 22,
+    fontSize: 20,
     fontWeight: 'bold',
     color: '#212121',
+  },
+  addButton: {
+    backgroundColor: '#E53935',
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   content: {
     flex: 1,
     padding: 16,
   },
-  contactsHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
+  list: {
+    flex: 1,
   },
-  contactsTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#212121',
-  },
-  addButton: {
-    backgroundColor: '#4CAF50',
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 2,
-    elevation: 2,
-  },
-  contactsList: {
-    paddingBottom: 16,
-  },
-  contactCard: {
+  contactItem: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 12,
     padding: 16,
-    marginBottom: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
+    marginVertical: 4,
+    marginHorizontal: 8,
+    borderRadius: 8,
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
   },
   contactInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
     flex: 1,
-  },
-  contactAvatar: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: '#E8F5E9',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 12,
-  },
-  contactInitial: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#4CAF50',
-  },
-  contactDetails: {
-    flex: 1,
+    marginLeft: 12,
   },
   contactName: {
     fontSize: 16,
     fontWeight: '600',
     color: '#212121',
-    marginBottom: 4,
   },
   contactPhone: {
     fontSize: 14,
-    color: '#616161',
-    marginBottom: 2,
-  },
-  contactRelation: {
-    fontSize: 14,
-    color: '#9E9E9E',
+    color: '#757575',
+    marginTop: 4,
   },
   contactActions: {
     flexDirection: 'row',

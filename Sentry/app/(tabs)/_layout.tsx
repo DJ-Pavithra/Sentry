@@ -1,6 +1,6 @@
 import { Tabs } from 'expo-router';
 import { Platform } from 'react-native';
-import { Chrome as Home, Phone, Shield, Settings, User } from 'lucide-react-native';
+import { Shield, User, Bell } from 'lucide-react-native';
 
 export default function TabLayout() {
   return (
@@ -20,18 +20,10 @@ export default function TabLayout() {
       }}
     >
       <Tabs.Screen
-        name="signin"
+        name="emergency"
         options={{
-          title: 'Sign In',
-          tabBarIcon: ({ color, size }) => <User size={size} color={color} />,
-          tabBarStyle: { display: 'none' },
-        }}
-      />
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: 'Home',
-          tabBarIcon: ({ color, size }) => <Home size={size} color={color} />,
+          title: 'SOS',
+          tabBarIcon: ({ color, size }) => <Shield size={size} color={color} />,
         }}
       />
       <Tabs.Screen
@@ -42,32 +34,10 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="emergency"
+        name="notifications"
         options={{
-          title: 'SOS',
-          tabBarIcon: ({ color, size }) => <Shield size={size} color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="fake-call"
-        options={{
-          title: 'Fake Call',
-          tabBarIcon: ({ color, size }) => <Phone size={size} color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="settings"
-        options={{
-          title: 'Settings',
-          tabBarIcon: ({ color, size }) => <Settings size={size} color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="onboard"
-        options={{
-          title: 'Onboard',
-          tabBarStyle: { display: 'none' },
-          href: null,
+          title: 'Alerts',
+          tabBarIcon: ({ color, size }) => <Bell size={size} color={color} />,
         }}
       />
     </Tabs>
