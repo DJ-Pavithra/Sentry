@@ -8,6 +8,20 @@ import * as Location from 'expo-location';
 import { DeviceEventEmitter } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+interface Contact {
+  phone: string;
+}
+
+interface NotificationItem {
+  id?: string; // Make it optional
+  type: string;
+  title: string;
+  description?: string;
+  message?: string;
+  read: boolean;
+  time?: string;
+}
+
 export default function EmergencyScreen() {
   const [recording, setRecording] = useState(false);
   const [sosActivated, setSosActivated] = useState(false);
@@ -43,7 +57,6 @@ export default function EmergencyScreen() {
         read: false,
       });
       
-      // Simulate auto audio recording for 30 seconds
       setTimeout(() => {
         setRecording(false);
       }, 30000);
@@ -52,25 +65,12 @@ export default function EmergencyScreen() {
         // Send emergency alerts to all contacts
         await EmergencyService.sendEmergencyAlerts();
         
-        // Get current location
-        const location = await Location.getCurrentPositionAsync({});
-        
-        // Store emergency in database
-        AsyncStorage.getItem('emergency_contacts').then(async (contacts) => {
-          if (contacts) {
-            const contactsArray = JSON.parse(contacts);
-            const googleMapsUrl = `https://www.google.com/maps?q=${location.coords.latitude},${location.coords.longitude}`;
-            const message = `EMERGENCY SOS ALERT! I need help! My current location: ${googleMapsUrl}`;
-            const phoneNumbers = contactsArray.map(contact => contact.phone);
-            await EmergencyService.sendSMS(phoneNumbers, message);
-          }
-        });
-
+        // Add a notification to confirm the alerts were sent
         addNotification({
-          id: Date.now().toString(),
+          type: 'emergency',
           title: 'Emergency Alert Sent',
-          message: 'Your emergency contacts have been notified.',
-          read: false
+          description: 'Your emergency contacts have been notified.',
+          read: false,
         });
       } catch (error) {
         Alert.alert(

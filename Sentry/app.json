@@ -14,13 +14,34 @@
         "ACCESS_FINE_LOCATION",
         "ACCESS_BACKGROUND_LOCATION",
         "SEND_SMS",
-        "READ_SMS"
-      ]
+        "READ_SMS",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION"
+      ],
+      "package": "your.app.package",
+      "googleServicesFile": "./google-services.json"
     },
     "ios": {
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "Guardian needs your location to send to emergency contacts when needed.",
         "NSLocationAlwaysAndWhenInUseUsageDescription": "Guardian needs your location to send to emergency contacts when needed."
+      },
+      "bundleIdentifier": "your.app.bundleid",
+      "config": {
+        "googleSignIn": {
+          "reservedClientId": "your-ios-client-id"
+        }
+      }
+    },
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "scheme": "your-app-scheme",
+    "extra": {
+      "eas": {
+        "projectId": "58289e11-e117-47fe-a777-488c6e364ace"
       }
     }
   }

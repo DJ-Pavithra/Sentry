@@ -1,22 +1,12 @@
 import { Tabs } from 'expo-router';
 import { Platform } from 'react-native';
-import { Shield, User, Bell } from 'lucide-react-native';
+import { Shield, User, Bell, Heart } from 'lucide-react-native';
 
 export default function TabLayout() {
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: '#E53935',
-        tabBarInactiveTintColor: '#757575',
-        tabBarStyle: {
-          backgroundColor: '#FFFFFF',
-          borderTopWidth: 1,
-          borderTopColor: '#E0E0E0',
-          paddingBottom: Platform.OS === 'ios' ? 20 : 5,
-          paddingTop: 5,
-          height: Platform.OS === 'ios' ? 85 : 60,
-        },
-        headerShown: false,
+        // ... existing options ...
       }}
     >
       <Tabs.Screen
@@ -31,6 +21,13 @@ export default function TabLayout() {
         options={{
           title: 'Contacts',
           tabBarIcon: ({ color, size }) => <User size={size} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="medical"
+        options={{
+          title: 'Medical',
+          tabBarIcon: ({ color, size }) => <Heart size={size} color={color} />,
         }}
       />
       <Tabs.Screen
